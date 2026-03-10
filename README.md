@@ -1,6 +1,6 @@
-# TWOil
+# taskwarrior.nvim
 
-TWOil is a local Neovim plugin for editing Taskwarrior tasks in a buffer.
+taskwarrior.nvim is a Neovim plugin for editing Taskwarrior tasks in a buffer.
 
 ## Current behavior
 
@@ -8,7 +8,7 @@ Running `:Task` opens a table-style buffer backed by Taskwarrior:
 
 ```text
 ID  Status    Project       Description
-12  pending   twoil         Build initial buffer UI
+12  pending   taskwarrior   Build initial buffer UI
 ↳                          that wraps under the description column
 18  waiting   personal      Call dentist
 +   pending   ·             ·
@@ -48,26 +48,47 @@ Color coding:
 - the new task row and placeholders are dimmed
 - wrapped description continuation rows are dimmed and aligned under `Description`
 
-## Plugin layout
+## Requirements
 
-- `plugin/twoil.lua`: command registration
-- `lua/twoil/init.lua`: public entrypoint
-- `lua/twoil/buffer.lua`: buffer lifecycle and save flow
-- `lua/twoil/render.lua`: table rendering and parsing
-- `lua/twoil/backend.lua`: Taskwarrior CLI integration
+- Neovim with `vim.system` support
+- [Taskwarrior](https://taskwarrior.org/) installed
+- `task` available in your `PATH`
 
-## Local setup with lazy.nvim
+If `task` is not installed or not in `PATH`, the `:Task` command fails with a clear error.
+
+## Installation with lazy.nvim
 
 ```lua
 {
-  dir = "/Users/armaanmahajan/Projects/TWOil",
-  name = "twoil",
-  lazy = false,
+  "armmahajan/taskwarrior.nvim",
+  version = "*",
 }
 ```
+
+If you prefer to pin the initial release explicitly:
+
+```lua
+{
+  "armmahajan/taskwarrior.nvim",
+  tag = "v0.0.1",
+}
+```
+
+## Usage
+
+- Run `:Task` to open the Taskwarrior buffer.
+- Pass Taskwarrior filters directly to the command, for example `:Task project:other` or `:Task +work`.
+- Use `:write` inside the buffer to sync edits back to Taskwarrior.
+
+## Project layout
+
+- `plugin/taskwarrior.lua`: command registration
+- `lua/taskwarrior/init.lua`: public entrypoint
+- `lua/taskwarrior/buffer.lua`: buffer lifecycle and save flow
+- `lua/taskwarrior/render.lua`: table rendering and parsing
+- `lua/taskwarrior/backend.lua`: Taskwarrior CLI integration
 
 ## Notes
 
 - Task identity is tracked internally by `uuid`, not the displayed ID column.
 - New tasks currently start as `pending`.
-- If `task` is not installed or not in `PATH`, the command fails with a clear error.

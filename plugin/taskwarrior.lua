@@ -1,7 +1,7 @@
 vim.api.nvim_create_user_command("Task", function(opts)
-  require("twoil").open(opts.fargs)
+  require("taskwarrior").open(opts.fargs)
 end, {
-  desc = "Open the TWOil Taskwarrior buffer",
+  desc = "Open the taskwarrior.nvim Taskwarrior buffer",
   nargs = "*",
 })
 

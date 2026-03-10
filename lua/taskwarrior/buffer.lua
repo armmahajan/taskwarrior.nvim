@@ -1,5 +1,5 @@
-local backend = require("twoil.backend")
-local render = require("twoil.render")
+local backend = require("taskwarrior.backend")
+local render = require("taskwarrior.render")
 
 local M = {}
 
@@ -8,10 +8,10 @@ local STATE = {
   snapshot = {},
 }
 
-local BUFFER_NAME = "twoil://tasks"
-local HIGHLIGHT_NAMESPACE = vim.api.nvim_create_namespace("twoil-highlights")
+local BUFFER_NAME = "taskwarrior://tasks"
+local HIGHLIGHT_NAMESPACE = vim.api.nvim_create_namespace("taskwarrior-highlights")
 local current_snapshot
-local HIGHLIGHT_AUGROUP = vim.api.nvim_create_augroup("twoil-highlights", { clear = true })
+local HIGHLIGHT_AUGROUP = vim.api.nvim_create_augroup("taskwarrior-highlights", { clear = true })
 
 local function get_hl(name)
   local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = false })
@@ -76,15 +76,15 @@ local function define_highlights()
   local header_bg = blend(background, target, luminance(background) > 127 and 0.1 or 0.16)
 
   local function define_row_set(suffix, bg)
-    vim.api.nvim_set_hl(0, "TWOilPending" .. suffix, { fg = pending_fg, bg = bg })
-    vim.api.nvim_set_hl(0, "TWOilWaiting" .. suffix, { fg = waiting_fg, bg = bg })
-    vim.api.nvim_set_hl(0, "TWOilDone" .. suffix, { fg = done_fg, bg = bg })
-    vim.api.nvim_set_hl(0, "TWOilNewRow" .. suffix, { fg = comment_fg, bg = bg, italic = true })
-    vim.api.nvim_set_hl(0, "TWOilReadonly" .. suffix, { fg = readonly_fg, bg = bg })
-    vim.api.nvim_set_hl(0, "TWOilPlaceholder" .. suffix, { fg = comment_fg, bg = bg, italic = true })
+    vim.api.nvim_set_hl(0, "TaskwarriorPending" .. suffix, { fg = pending_fg, bg = bg })
+    vim.api.nvim_set_hl(0, "TaskwarriorWaiting" .. suffix, { fg = waiting_fg, bg = bg })
+    vim.api.nvim_set_hl(0, "TaskwarriorDone" .. suffix, { fg = done_fg, bg = bg })
+    vim.api.nvim_set_hl(0, "TaskwarriorNewRow" .. suffix, { fg = comment_fg, bg = bg, italic = true })
+    vim.api.nvim_set_hl(0, "TaskwarriorReadonly" .. suffix, { fg = readonly_fg, bg = bg })
+    vim.api.nvim_set_hl(0, "TaskwarriorPlaceholder" .. suffix, { fg = comment_fg, bg = bg, italic = true })
   end
 
-  vim.api.nvim_set_hl(0, "TWOilHeader", { fg = header_fg, bg = header_bg, bold = true })
+  vim.api.nvim_set_hl(0, "TaskwarriorHeader", { fg = header_fg, bg = header_bg, bold = true })
   define_row_set("Odd", odd_bg)
   define_row_set("Even", even_bg)
 end
@@ -97,7 +97,7 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 local function notify(message, level)
-  vim.notify(message, level or vim.log.levels.INFO, { title = "TWOil" })
+  vim.notify(message, level or vim.log.levels.INFO, { title = "taskwarrior.nvim" })
 end
 
 local function reset_modified(bufnr)
@@ -162,10 +162,10 @@ local function apply_highlights(bufnr)
     max_row_width = math.max(max_row_width, vim.fn.strdisplaywidth(line_text))
   end
 
-  add_highlight(bufnr, "TWOilHeader", 0, 0, -1)
-  add_row_fill(bufnr, 0, lines[1], max_row_width, "TWOilHeader")
+  add_highlight(bufnr, "TaskwarriorHeader", 0, 0, -1)
+  add_row_fill(bufnr, 0, lines[1], max_row_width, "TaskwarriorHeader")
 
-  local continuation_group = "TWOilPendingOdd"
+  local continuation_group = "TaskwarriorPendingOdd"
   local parity_suffix = "Odd"
   local stripe_index = 0
   for line_index = 2, #lines do
@@ -176,40 +176,40 @@ local function apply_highlights(bufnr)
       stripe_index = stripe_index + 1
       parity_suffix = stripe_index % 2 == 1 and "Odd" or "Even"
 
-      local row_group = "TWOilPending" .. parity_suffix
+      local row_group = "TaskwarriorPending" .. parity_suffix
       if row.status == "waiting" then
-        row_group = "TWOilWaiting" .. parity_suffix
+        row_group = "TaskwarriorWaiting" .. parity_suffix
       end
       if row.status == "done" then
-        row_group = "TWOilDone" .. parity_suffix
+        row_group = "TaskwarriorDone" .. parity_suffix
       end
 
       continuation_group = row_group
-      add_highlight(bufnr, "TWOilReadonly" .. parity_suffix, line, 0, row.id_col_end)
+      add_highlight(bufnr, "TaskwarriorReadonly" .. parity_suffix, line, 0, row.id_col_end)
       add_highlight(bufnr, row_group, line, 0, -1)
       add_row_fill(bufnr, line, lines[line_index], max_row_width, row_group)
 
       if row.project_raw == render.PLACEHOLDER then
-        add_highlight(bufnr, "TWOilPlaceholder" .. parity_suffix, line, row.project_col_start, row.project_col_end)
+        add_highlight(bufnr, "TaskwarriorPlaceholder" .. parity_suffix, line, row.project_col_start, row.project_col_end)
       end
     elseif row.kind == "new" then
       stripe_index = stripe_index + 1
       parity_suffix = stripe_index % 2 == 1 and "Odd" or "Even"
-      continuation_group = "TWOilNewRow" .. parity_suffix
+      continuation_group = "TaskwarriorNewRow" .. parity_suffix
       add_highlight(bufnr, continuation_group, line, 0, -1)
-      add_highlight(bufnr, "TWOilReadonly" .. parity_suffix, line, 0, row.id_col_end)
+      add_highlight(bufnr, "TaskwarriorReadonly" .. parity_suffix, line, 0, row.id_col_end)
       add_row_fill(bufnr, line, lines[line_index], max_row_width, continuation_group)
 
       if row.project_raw == render.PLACEHOLDER then
-        add_highlight(bufnr, "TWOilPlaceholder" .. parity_suffix, line, row.project_col_start, row.project_col_end)
+        add_highlight(bufnr, "TaskwarriorPlaceholder" .. parity_suffix, line, row.project_col_start, row.project_col_end)
       end
 
       if row.description_raw == render.PLACEHOLDER then
-        add_highlight(bufnr, "TWOilPlaceholder" .. parity_suffix, line, row.description_col_start, -1)
+        add_highlight(bufnr, "TaskwarriorPlaceholder" .. parity_suffix, line, row.description_col_start, -1)
       end
     elseif row.kind == "continuation" then
       add_highlight(bufnr, continuation_group, line, 0, -1)
-      add_highlight(bufnr, "TWOilReadonly" .. parity_suffix, line, 0, row.id_col_end)
+      add_highlight(bufnr, "TaskwarriorReadonly" .. parity_suffix, line, 0, row.id_col_end)
       add_row_fill(bufnr, line, lines[line_index], max_row_width, continuation_group)
     end
   end
@@ -240,13 +240,13 @@ local function create_buffer()
   vim.api.nvim_set_option_value("buftype", "acwrite", { buf = bufnr })
   vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = bufnr })
   vim.api.nvim_set_option_value("swapfile", false, { buf = bufnr })
-  vim.api.nvim_set_option_value("filetype", "twoil", { buf = bufnr })
+  vim.api.nvim_set_option_value("filetype", "taskwarrior", { buf = bufnr })
   vim.api.nvim_buf_set_name(bufnr, BUFFER_NAME)
 
   vim.api.nvim_create_autocmd("BufWriteCmd", {
     buffer = bufnr,
     callback = function(args)
-      require("twoil.buffer").sync(args.buf)
+      require("taskwarrior.buffer").sync(args.buf)
     end,
   })
 
@@ -260,7 +260,7 @@ local function create_buffer()
   vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
     buffer = bufnr,
     callback = function(args)
-      require("twoil.buffer").refresh_highlights(args.buf)
+      require("taskwarrior.buffer").refresh_highlights(args.buf)
     end,
   })
 
@@ -325,7 +325,7 @@ end
 function M.sync(bufnr)
   local snapshot = current_snapshot(bufnr)
   if not snapshot then
-    notify("No TWOil task state found for this buffer", vim.log.levels.ERROR)
+    notify("No taskwarrior.nvim task state found for this buffer", vim.log.levels.ERROR)
     return
   end
 

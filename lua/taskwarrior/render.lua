@@ -291,7 +291,7 @@ end
 
 function M.diff(lines, snapshot)
   if #lines == 0 then
-    return nil, "the TWOil buffer cannot be empty"
+    return nil, "the taskwarrior.nvim buffer cannot be empty"
   end
 
   local expected_header = M.header_line(snapshot.layout)
